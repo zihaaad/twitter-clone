@@ -51,14 +51,37 @@ export const signup = async (req, res) => {
     }
   } catch (error) {
     console.log("Error", error.message);
-    res.status(500).json({success: false, message: "Invalid user data"});
+    res.status(500).json({success: false, message: "Something went Wrong"});
   }
 };
 
 export const login = async (req, res) => {
-  res.json({
-    message: "Login",
-  });
+  try {
+    const {username, password} = req.body;
+    const user = await User.findOne({username});
+
+    const isPasswordCorrent = await bcrypt.compare(
+      password,
+      user?.password || ""
+    );
+
+    if (!user || !isPasswordCorrent) {
+      return res
+        .status(400)
+        .json({success: false, message: "Invalid username or password"});
+    }
+
+    generateTokenAndSetCookie(user?._id, res);
+
+    res.status(200).json({
+      success: true,
+      message: "User Logged In successfully",
+      data: user,
+    });
+  } catch (error) {
+    console.log("Error", error.message);
+    res.status(500).json({success: false, message: "Something went Wrong"});
+  }
 };
 
 export const logout = async (req, res) => {
