@@ -85,7 +85,30 @@ export const login = async (req, res) => {
 };
 
 export const logout = async (req, res) => {
-  res.json({
-    message: "Logout",
-  });
+  try {
+    res.cookie("jwt", "", {maxAge: 0});
+
+    res.status(200).json({
+      success: true,
+      message: "Logged out successfully",
+    });
+  } catch (error) {
+    console.log("Error", error.message);
+    res.status(500).json({success: false, message: "Something went Wrong"});
+  }
+};
+
+export const getMe = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id).select("-password");
+
+    res.status(200).json({
+      success: true,
+      message: "User data retrived successfully",
+      data: user,
+    });
+  } catch (error) {
+    console.log("Error", error.message);
+    res.status(500).json({success: false, message: "Something went Wrong"});
+  }
 };
