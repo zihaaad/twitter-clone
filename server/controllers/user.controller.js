@@ -1,4 +1,5 @@
 import User from "../models/user.model.js";
+import Notification from "../models/notification.model.js";
 import {v2 as cloudinary} from "cloudinary";
 import Response from "../lib/utils/response.js";
 import bcrypt from "bcrypt";
@@ -68,6 +69,13 @@ export const followUnfollowUser = async (req, res) => {
     } else {
       await User.findByIdAndUpdate(id, {$push: {followers: _id}});
       await User.findByIdAndUpdate(_id, {$push: {following: id}});
+      const newNotification = new Notification({
+        type: "follow",
+        from: _id,
+        to: userToModify._id,
+      });
+      await newNotification.save();
+
       Response(res, {
         httpCode: 200,
         status: true,
