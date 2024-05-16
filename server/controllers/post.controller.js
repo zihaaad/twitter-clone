@@ -198,10 +198,6 @@ export const getAllPosts = async (req, res) => {
       .populate({
         path: "comments.user",
         select: "-password",
-      })
-      .populate({
-        path: "likes.user",
-        select: "-password",
       });
 
     return Response(res, {
@@ -216,10 +212,47 @@ export const getAllPosts = async (req, res) => {
   }
 };
 
+export const getLikedPosts = async (req, res) => {
+  const userId = req.params.id;
+
+  try {
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return Response(res, {
+        httpCode: 400,
+        status: false,
+        message: "User not found",
+      });
+    }
+
+    const likedPosts = await Post.find({_id: {$in: user.likedPosts}})
+      .populate({
+        path: "user",
+        select: "-password",
+      })
+      .populate({
+        path: "comments.user",
+        select: "-password",
+      });
+
+    Response(res, {
+      httpCode: 200,
+      status: true,
+      message: "Liked posts retrieved successfully",
+      data: likedPosts,
+    });
+  } catch (error) {
+    console.log("Error from Post Controller:", error);
+    return CatchResponse(res);
+  }
+};
+
 export default {
   createPost,
   deletePost,
   commentOnPost,
   likeUnlikePost,
   getAllPosts,
+  getLikedPosts,
 };

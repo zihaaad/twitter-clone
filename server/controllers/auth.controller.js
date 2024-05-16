@@ -1,6 +1,7 @@
 import User from "../models/user.model.js";
 import bcrypt from "bcrypt";
 import generateTokenAndSetCookie from "../lib/utils/generateToken.js";
+import CatchResponse from "../lib/utils/catchResponse.js";
 
 export const signup = async (req, res) => {
   try {
@@ -51,7 +52,7 @@ export const signup = async (req, res) => {
     }
   } catch (error) {
     console.log("Error", error.message);
-    res.status(500).json({success: false, message: "Something went Wrong"});
+    CatchResponse(res);
   }
 };
 
@@ -80,7 +81,7 @@ export const login = async (req, res) => {
     });
   } catch (error) {
     console.log("Error", error.message);
-    res.status(500).json({success: false, message: "Something went Wrong"});
+    CatchResponse(res);
   }
 };
 
@@ -94,7 +95,7 @@ export const logout = async (req, res) => {
     });
   } catch (error) {
     console.log("Error", error.message);
-    res.status(500).json({success: false, message: "Something went Wrong"});
+    CatchResponse(res);
   }
 };
 
@@ -109,6 +110,6 @@ export const getMe = async (req, res) => {
     });
   } catch (error) {
     console.log("Error", error.message);
-    res.status(500).json({success: false, message: "Something went Wrong"});
+    CatchResponse(res);
   }
 };

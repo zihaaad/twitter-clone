@@ -3,6 +3,7 @@ import Notification from "../models/notification.model.js";
 import {v2 as cloudinary} from "cloudinary";
 import Response from "../lib/utils/response.js";
 import bcrypt from "bcrypt";
+import CatchResponse from "../lib/utils/catchResponse.js";
 
 export const getUserProfile = async (req, res) => {
   const {username} = req.params;
@@ -84,11 +85,7 @@ export const followUnfollowUser = async (req, res) => {
     }
   } catch (error) {
     console.log("Error from User Controller", error);
-    Response(res, {
-      httpCode: 500,
-      status: false,
-      message: "Internal Server Error",
-    });
+    CatchResponse(res);
   }
 };
 
@@ -120,11 +117,7 @@ export const getSuggestedUsers = async (req, res) => {
     });
   } catch (error) {
     console.log("Error from User Controller", error);
-    Response(res, {
-      httpCode: 500,
-      status: false,
-      message: "Internal Server Error",
-    });
+    CatchResponse(res);
   }
 };
 
@@ -218,10 +211,6 @@ export const updateUser = async (req, res) => {
     });
   } catch (error) {
     console.log("Error from User Controller", error);
-    return Response(res, {
-      httpCode: 500,
-      status: false,
-      message: "Internal Server Error",
-    });
+    CatchResponse(res);
   }
 };
