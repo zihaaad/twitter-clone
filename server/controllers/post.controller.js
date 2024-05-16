@@ -248,6 +248,70 @@ export const getLikedPosts = async (req, res) => {
   }
 };
 
+export const getFollowingPosts = async (req, res) => {
+  const userId = req.user._id;
+  try {
+    const user = await User.findById(userId);
+    if (!user) {
+      return Response(res, {
+        httpCode: 400,
+        status: false,
+        message: "User not found",
+      });
+    }
+
+    const following = user.following;
+    const feedPosts = await Post.find({user: {$in: following}})
+      .sort({createdAt: -1})
+      .populate({
+        path: "user",
+        select: "-password",
+      })
+      .populate({
+        path: "comments.user",
+        select: "-password",
+      });
+
+    Response(res, {
+      httpCode: 200,
+      status: true,
+      message: "Feed Posts retrieved successfully",
+      data: feedPosts,
+    });
+  } catch (error) {
+    console.log("Error from Post Controller:", error);
+    return CatchResponse(res);
+  }
+};
+
+export const getUserPost = async (req, res) => {
+  const userId = req.params.id;
+  try {
+    const user = await User.findById(userId);
+    if (!user) {
+      return Response(res, {
+        httpCode: 400,
+        status: false,
+        message: "User not found",
+      });
+    }
+
+    const userPosts = await Post.find({user: userId}).populate({
+      path: "user",
+      select: "-password",
+    });
+    Response(res, {
+      httpCode: 200,
+      status: true,
+      message: "User Posts retrieved successfully",
+      data: userPosts,
+    });
+  } catch (error) {
+    console.log("Error from Post Controller:", error);
+    return CatchResponse(res);
+  }
+};
+
 export default {
   createPost,
   deletePost,
