@@ -3,6 +3,8 @@ import RootLayout from "../RootLayout";
 import Home from "../pages/home/Home";
 import Login from "../pages/auth/login/Login";
 import SignUp from "../pages/auth/signup/SignUp";
+import Notifications from "../pages/notifications/Notifications";
+import Profile from "../pages/profile/Profile";
 
 const router = createBrowserRouter([
   {
@@ -12,6 +14,14 @@ const router = createBrowserRouter([
       {
         path: "/",
         element: <Home />,
+      },
+      {
+        path: "/notifications",
+        element: <Notifications />,
+      },
+      {
+        path: "/profile/:username",
+        element: <Profile />,
       },
     ],
   },
