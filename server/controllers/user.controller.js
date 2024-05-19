@@ -12,7 +12,7 @@ export const getUserProfile = async (req, res) => {
     const user = await User.findOne({username}).select("-password");
 
     if (!user) {
-      Response(res, {
+      return Response(res, {
         httpCode: 404,
         status: false,
         message: "User not found!",

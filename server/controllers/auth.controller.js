@@ -45,7 +45,16 @@ export const signup = async (req, res) => {
       res.status(201).json({
         success: true,
         message: "User created successfully",
-        data: newUser,
+        data: {
+          _id: newUser._id,
+          fullName: newUser.fullName,
+          username: newUser.username,
+          email: newUser.email,
+          followers: newUser.followers,
+          following: newUser.following,
+          profileImg: newUser.profileImg,
+          coverImage: newUser.coverImage,
+        },
       });
     } else {
       res.status(400).json({success: false, message: "Invalid user data"});
@@ -77,7 +86,16 @@ export const login = async (req, res) => {
     res.status(200).json({
       success: true,
       message: "User Logged In successfully",
-      data: user,
+      data: {
+        _id: user._id,
+        fullName: user.fullName,
+        username: user.username,
+        email: user.email,
+        followers: user.followers,
+        following: user.following,
+        profileImg: user.profileImg,
+        coverImg: user.coverImg,
+      },
     });
   } catch (error) {
     console.log("Error", error.message);
