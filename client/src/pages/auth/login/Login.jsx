@@ -4,6 +4,8 @@ import {Link} from "react-router-dom";
 import {MdOutlineMail} from "react-icons/md";
 import {MdPassword} from "react-icons/md";
 import XSvg from "../../../components/svg/X";
+import {useMutation} from "@tanstack/react-query";
+import {Toaster, toast} from "sonner";
 
 const LoginPage = () => {
   const [formData, setFormData] = useState({
@@ -11,16 +13,42 @@ const LoginPage = () => {
     password: "",
   });
 
+  const {mutate, isError, isPending, error} = useMutation({
+    mutationFn: async ({username, password}) => {
+      try {
+        const res = await fetch("/api/auth/login", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({username, password}),
+        });
+
+        const data = await res.json();
+        if (!data.success) {
+          toast.error(data.message);
+        } else {
+          toast.success(data.message);
+          setFormData({
+            username: "",
+            password: "",
+          });
+        }
+      } catch (error) {
+        toast.error("something went wrong");
+        console.log(error);
+      }
+    },
+  });
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log(formData);
+    mutate(formData);
   };
 
   const handleInputChange = (e) => {
     setFormData({...formData, [e.target.name]: e.target.value});
   };
-
-  const isError = false;
 
   return (
     <div className="max-w-screen-xl mx-auto flex h-screen">
@@ -57,9 +85,11 @@ const LoginPage = () => {
             />
           </label>
           <button className="btn rounded-full btn-primary text-white">
-            Login
+            {isPending ? "Loading..." : "Sign In"}
           </button>
-          {isError && <p className="text-red-500">Something went wrong</p>}
+          {isError && (
+            <p className="text-red-500">{error || "something went wrong"}</p>
+          )}
         </form>
         <div className="flex flex-col gap-2 mt-4  md:w-1/2 lg:w-2/3">
           <p className="text-white text-lg">{"Don't"} have an account?</p>
@@ -70,6 +100,7 @@ const LoginPage = () => {
           </Link>
         </div>
       </div>
+      <Toaster richColors position="top-center" />
     </div>
   );
 };

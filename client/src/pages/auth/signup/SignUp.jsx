@@ -6,6 +6,8 @@ import {FaUser} from "react-icons/fa";
 import {MdPassword} from "react-icons/md";
 import {MdDriveFileRenameOutline} from "react-icons/md";
 import XSvg from "../../../components/svg/X";
+import {useMutation} from "@tanstack/react-query";
+import {Toaster, toast} from "sonner";
 
 const SignUpPage = () => {
   const [formData, setFormData] = useState({
@@ -15,16 +17,44 @@ const SignUpPage = () => {
     password: "",
   });
 
+  const {mutate, isError, isPending, error} = useMutation({
+    mutationFn: async ({email, username, fullName, password}) => {
+      try {
+        const res = await fetch("/api/auth/signup", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({email, username, fullName, password}),
+        });
+
+        const data = await res.json();
+        if (!data.success) {
+          toast.error(data.message);
+        } else {
+          toast.success(data.message);
+          setFormData({
+            email: "",
+            password: "",
+            fullName: "",
+            username: "",
+          });
+        }
+      } catch (error) {
+        toast.error("something went wrong");
+        console.log(error);
+      }
+    },
+  });
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log(formData);
+    mutate(formData);
   };
 
   const handleInputChange = (e) => {
     setFormData({...formData, [e.target.name]: e.target.value});
   };
-
-  const isError = false;
 
   return (
     <div className="max-w-screen-xl mx-auto flex h-screen px-10">
@@ -84,19 +114,20 @@ const SignUpPage = () => {
             />
           </label>
           <button className="btn rounded-full btn-primary text-white">
-            Sign up
+            {isPending ? "Loading..." : "Sign Up"}
           </button>
-          {isError && <p className="text-red-500">Something went wrong</p>}
+          {isError && <p className="text-red-500">{error.message}</p>}
         </form>
         <div className="flex flex-col lg:w-2/3 gap-2 mt-4">
           <p className="text-white text-lg">Already have an account?</p>
           <Link to="/login">
             <button className="btn rounded-full btn-primary text-white btn-outline w-full">
-              Sign in
+              Sign In
             </button>
           </Link>
         </div>
       </div>
+      <Toaster position="top-center" richColors />
     </div>
   );
 };

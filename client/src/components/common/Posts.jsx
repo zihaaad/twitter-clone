@@ -3,7 +3,7 @@ import PostSkeleton from "../skeletons/PostSkeleton";
 import Post from "./Post";
 
 const Posts = () => {
-  const isLoading = false;
+  const isLoading = true;
 
   return (
     <>

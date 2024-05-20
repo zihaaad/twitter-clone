@@ -4,7 +4,7 @@ import RightPanel from "./components/common/RightPanel";
 
 function RootLayout() {
   return (
-    <main className="flex max-w-6xl mx-auto ">
+    <main className="flex max-w-6xl mx-auto">
       <Sidebar />
       <Outlet />
       <RightPanel />
