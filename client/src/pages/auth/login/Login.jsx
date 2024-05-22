@@ -35,7 +35,6 @@ const Login = () => {
             username: "",
             password: "",
           });
-          navigate("/");
         }
       } catch (error) {
         toast.error("something went wrong");
@@ -44,6 +43,7 @@ const Login = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({queryKey: ["authUser"]});
+      navigate("/");
     },
   });
 

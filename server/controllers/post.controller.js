@@ -158,10 +158,15 @@ export const likeUnlikePost = async (req, res) => {
       await user.save();
       await post.save();
 
+      const updatedLikes = post.likes.filter(
+        (id) => id.toString() !== userId.toString()
+      );
+
       return Response(res, {
         httpCode: 200,
         status: true,
         message: "Post unliked successfully",
+        data: updatedLikes,
       });
     } else {
       post.likes.push(userId);
@@ -174,11 +179,15 @@ export const likeUnlikePost = async (req, res) => {
         to: post.user,
         type: "like",
       });
+
+      const updatedLikes = post.likes;
       await notification.save();
+
       return Response(res, {
         httpCode: 200,
         status: true,
         message: "Post liked successfully",
+        data: updatedLikes,
       });
     }
   } catch (error) {

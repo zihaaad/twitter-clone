@@ -9,6 +9,7 @@ import {Link} from "react-router-dom";
 import {useMutation, useQuery, useQueryClient} from "@tanstack/react-query";
 import {Toaster, toast} from "sonner";
 import LoadingSpinner from "./LoadingSpinner";
+import {formatPostDate} from "../../utils/db/date";
 
 const Post = ({post}) => {
   const queryClient = useQueryClient();
@@ -16,7 +17,13 @@ const Post = ({post}) => {
   const {data: authUser} = useQuery({
     queryKey: ["authUser"],
   });
-  const {mutate: deletePost, isPending} = useMutation({
+
+  const postOwner = post.user;
+  const isLiked = post?.likes?.includes(authUser?.data._id);
+  const isMyPost = authUser?.data?._id === post?.user._id;
+  const formattedDate = formatPostDate(post.createdAt);
+
+  const {mutate: deletePost, isPending: isDeleting} = useMutation({
     mutationFn: async () => {
       try {
         const res = await fetch(`/api/posts/delete/${post._id}`, {
@@ -38,14 +45,62 @@ const Post = ({post}) => {
     },
   });
 
-  const postOwner = post.user;
-  const isLiked = false;
+  const {mutate: likePost, isPending: isLiking} = useMutation({
+    mutationFn: async () => {
+      try {
+        const res = await fetch(`/api/posts/like/${post._id}`, {
+          method: "POST",
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.message || "something went wrong");
+        }
+        return data.data;
+      } catch (error) {
+        throw new Error(error);
+      }
+    },
+    onSuccess: (updatedLikes) => {
+      queryClient.setQueryData(["posts"], (oldData) => {
+        return oldData?.map((p) => {
+          if (p._id === post._id) {
+            return {...post, likes: updatedLikes};
+          }
+          return p;
+        });
+      });
+    },
+    onError: (error) => {
+      toast.error(error);
+    },
+  });
 
-  const isMyPost = authUser?.data?._id === post?.user._id;
-
-  const formattedDate = "1h";
-
-  const isCommenting = false;
+  const {mutate: commentPost, isPending: isCommenting} = useMutation({
+    mutationFn: async () => {
+      try {
+        const res = await fetch(`/api/posts/comment/${post._id}`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({text: comment}),
+        });
+        const data = res.json();
+        if (!res.ok) {
+          throw new Error(data.message);
+        }
+        if (data.success) {
+          toast.success(data.message);
+        }
+      } catch (error) {
+        throw new Error(error);
+      }
+    },
+    onSuccess: () => {
+      setComment("");
+      queryClient.invalidateQueries({queryKey: ["posts"]});
+    },
+  });
 
   const handleDeletePost = () => {
     deletePost();
@@ -53,9 +108,14 @@ const Post = ({post}) => {
 
   const handlePostComment = (e) => {
     e.preventDefault();
+    if (isCommenting) return;
+    commentPost();
   };
 
-  const handleLikePost = () => {};
+  const handleLikePost = () => {
+    if (isLiking) return;
+    likePost();
+  };
 
   return (
     <>
@@ -81,13 +141,13 @@ const Post = ({post}) => {
             </span>
             {isMyPost && (
               <span className="flex justify-end flex-1">
-                {!isPending && (
+                {!isDeleting && (
                   <FaTrash
                     className="cursor-pointer hover:text-red-500"
                     onClick={handleDeletePost}
                   />
                 )}
-                {isPending && <LoadingSpinner size="sm" />}
+                {isDeleting && <LoadingSpinner size="sm" />}
               </span>
             )}
           </div>
@@ -184,10 +244,11 @@ const Post = ({post}) => {
               <div
                 className="flex gap-1 items-center group cursor-pointer"
                 onClick={handleLikePost}>
-                {!isLiked && (
+                {isLiking && <LoadingSpinner size="sm" />}
+                {!isLiked && !isLiking && (
                   <FaRegHeart className="w-4 h-4 cursor-pointer text-slate-500 group-hover:text-pink-500" />
                 )}
-                {isLiked && (
+                {isLiked && !isLiking && (
                   <FaRegHeart className="w-4 h-4 cursor-pointer text-pink-500 " />
                 )}
 

@@ -14,13 +14,11 @@ export const ProtectedRoutes = ({children}) => {
         if (!res.ok) {
           throw new Error(data.message || "Something wnet wrong");
         }
-        console.log("authUser is here:", data);
         return data;
       } catch (error) {
         throw new Error(error);
       }
     },
-    retry: false,
   });
 
   if (isLoading) {
