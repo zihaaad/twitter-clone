@@ -5,9 +5,13 @@ export const auth = async (req, res, next) => {
   try {
     const token = req.cookies.jwt;
     if (!token) {
-      res
+      return res
         .status(401)
-        .json({success: false, message: "Unauthorized: No Token Provided"});
+        .json({
+          success: false,
+          message: "Unauthorized: No Token Provided",
+          data: null,
+        });
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
