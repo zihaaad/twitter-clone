@@ -1,13 +1,15 @@
 import {useState} from "react";
-import {Link} from "react-router-dom";
+import {Link, useNavigate} from "react-router-dom";
 
 import {MdOutlineMail} from "react-icons/md";
 import {MdPassword} from "react-icons/md";
 import XSvg from "../../../components/svg/X";
-import {useMutation} from "@tanstack/react-query";
+import {useMutation, useQueryClient} from "@tanstack/react-query";
 import {Toaster, toast} from "sonner";
 
-const LoginPage = () => {
+const Login = () => {
+  const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     username: "",
     password: "",
@@ -33,11 +35,15 @@ const LoginPage = () => {
             username: "",
             password: "",
           });
+          navigate("/");
         }
       } catch (error) {
         toast.error("something went wrong");
         console.log(error);
       }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({queryKey: ["authUser"]});
     },
   });
 
@@ -104,4 +110,4 @@ const LoginPage = () => {
     </div>
   );
 };
-export default LoginPage;
+export default Login;

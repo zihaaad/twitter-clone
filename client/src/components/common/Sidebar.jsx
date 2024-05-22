@@ -4,8 +4,34 @@ import {FaUser} from "react-icons/fa";
 import {Link} from "react-router-dom";
 import {BiLogOut} from "react-icons/bi";
 import XSvg from "../svg/X";
+import {useMutation, useQueryClient} from "@tanstack/react-query";
+import {Toaster, toast} from "sonner";
 
 const Sidebar = () => {
+  const queryClient = useQueryClient();
+  const {mutate: logout} = useMutation({
+    mutationFn: async () => {
+      try {
+        const res = await fetch("/api/auth/logout", {
+          method: "POST",
+        });
+        const data = await res.json();
+
+        if (!data.success) {
+          toast.error(data.message);
+        } else {
+          toast.success(data.message);
+        }
+      } catch (error) {
+        toast.error("something went wrong");
+        console.log(error);
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({queryKey: ["authUser"]});
+    },
+  });
+
   const data = {
     fullName: "John Doe",
     username: "johndoe",
@@ -61,11 +87,18 @@ const Sidebar = () => {
                 </p>
                 <p className="text-slate-500 text-sm">@{data?.username}</p>
               </div>
-              <BiLogOut className="w-5 h-5 cursor-pointer" />
+              <BiLogOut
+                onClick={(e) => {
+                  e.preventDefault();
+                  logout();
+                }}
+                className="w-5 h-5 cursor-pointer"
+              />
             </div>
           </Link>
         )}
       </div>
+      <Toaster position="top-center" richColors />
     </div>
   );
 };

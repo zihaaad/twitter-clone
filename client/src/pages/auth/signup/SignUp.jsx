@@ -1,4 +1,4 @@
-import {Link} from "react-router-dom";
+import {Link, useNavigate} from "react-router-dom";
 import {useState} from "react";
 
 import {MdOutlineMail} from "react-icons/md";
@@ -6,10 +6,12 @@ import {FaUser} from "react-icons/fa";
 import {MdPassword} from "react-icons/md";
 import {MdDriveFileRenameOutline} from "react-icons/md";
 import XSvg from "../../../components/svg/X";
-import {useMutation} from "@tanstack/react-query";
+import {useMutation, useQueryClient} from "@tanstack/react-query";
 import {Toaster, toast} from "sonner";
 
-const SignUpPage = () => {
+const SignUp = () => {
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [formData, setFormData] = useState({
     email: "",
     username: "",
@@ -33,6 +35,7 @@ const SignUpPage = () => {
           toast.error(data.message);
         } else {
           toast.success(data.message);
+          navigate("/");
           setFormData({
             email: "",
             password: "",
@@ -44,6 +47,9 @@ const SignUpPage = () => {
         toast.error("something went wrong");
         console.log(error);
       }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({queryKey: ["authUser"]});
     },
   });
 
@@ -131,4 +137,4 @@ const SignUpPage = () => {
     </div>
   );
 };
-export default SignUpPage;
+export default SignUp;
