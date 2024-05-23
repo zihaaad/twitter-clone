@@ -1,36 +1,51 @@
 import {Link} from "react-router-dom";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
-
 import {IoSettingsOutline} from "react-icons/io5";
 import {FaUser} from "react-icons/fa";
 import {FaHeart} from "react-icons/fa6";
+import {useQuery, useMutation, useQueryClient} from "@tanstack/react-query";
+import {toast} from "sonner";
 
 const Notifications = () => {
-  const isLoading = false;
-  const notifications = [
-    {
-      _id: "1",
-      from: {
-        _id: "1",
-        username: "johndoe",
-        profileImg: "/avatars/boy2.png",
-      },
-      type: "follow",
-    },
-    {
-      _id: "2",
-      from: {
-        _id: "2",
-        username: "janedoe",
-        profileImg: "/avatars/girl1.png",
-      },
-      type: "like",
-    },
-  ];
+  const queryClient = useQueryClient();
 
-  const deleteNotifications = () => {
-    alert("All notifications deleted");
-  };
+  const {data: notifications, isLoading} = useQuery({
+    queryKey: ["notifications"],
+    queryFn: async () => {
+      try {
+        const res = await fetch("/api/notifications");
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.message || "Something went Wrong!");
+        }
+        return data;
+      } catch (error) {
+        throw new Error(error);
+      }
+    },
+  });
+
+  const {mutate: deleteNotifications} = useMutation({
+    mutationFn: async () => {
+      try {
+        const res = await fetch("/api/notifications", {
+          method: "DELETE",
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.message || "Something went wrong!");
+        }
+        if (data.success) {
+          toast.success(data.message);
+        }
+      } catch (error) {
+        throw new Error(error);
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({queryKey: ["notifications"]});
+    },
+  });
 
   return (
     <>
@@ -55,19 +70,21 @@ const Notifications = () => {
             <LoadingSpinner size="lg" />
           </div>
         )}
-        {notifications?.length === 0 && (
+        {notifications?.data?.length === 0 && (
           <div className="text-center p-4 font-bold">No notifications 🤔</div>
         )}
-        {notifications?.map((notification) => (
-          <div className="border-b border-gray-700" key={notification._id}>
-            <div className="flex gap-2 p-4">
+        {notifications?.data?.map((notification) => (
+          <div className=" border-b border-gray-700" key={notification._id}>
+            <div className="flex items-center gap-3 px-4 py-6">
               {notification.type === "follow" && (
                 <FaUser className="w-7 h-7 text-primary" />
               )}
               {notification.type === "like" && (
                 <FaHeart className="w-7 h-7 text-red-500" />
               )}
-              <Link to={`/profile/${notification.from.username}`}>
+              <Link
+                className="flex items-center gap-3"
+                to={`/profile/${notification.from.username}`}>
                 <div className="avatar">
                   <div className="w-8 rounded-full">
                     <img
