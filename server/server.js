@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import connectDatabase from "./database/db.js";
 import {v2 as cloudinary} from "cloudinary";
+import path from "path";
 
 import authRoutes from "./routes/auth.route.js";
 import userRoutes from "./routes/user.route.js";
@@ -18,6 +19,7 @@ cloudinary.config({
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const __dirname = path.resolve();
 
 app.use(express.json({limit: "200kb"}));
 app.use(express.urlencoded({extended: true}));
@@ -28,12 +30,13 @@ app.use("/api/users", userRoutes);
 app.use("/api/posts", postRoutes);
 app.use("/api/notifications", notificationRoutes);
 
-app.get("/", (req, res) => {
-  res.send({
-    success: true,
-    server: "active",
+if (process.env.NODE_ENV === "production") {
+  app.use(express.static(path.join(__dirname, "../client/dist")));
+
+  app.get("*", (req, res) => {
+    res.sendFile(path.resolve(__dirname, "../client", "dist", "index.html"));
   });
-});
+}
 
 app.listen(PORT, () => {
   console.log(`SERVER IS RUNNING ON http://localhost:${PORT}`);
