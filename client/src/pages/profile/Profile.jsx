@@ -6,26 +6,22 @@ import {POSTS} from "../../utils/db/dummy";
 import {FaArrowLeft} from "react-icons/fa6";
 import {IoCalendarOutline} from "react-icons/io5";
 import {MdEdit} from "react-icons/md";
-import ProfileHeaderSkeleton from "../../components/skeletons/ProfileHeaderSkeleton";
-import {useMutation, useQuery, useQueryClient} from "@tanstack/react-query";
+import {useQuery} from "@tanstack/react-query";
 import {formatMemberSinceDate} from "../../utils/db/date";
 import useFollow from "../../hooks/useFollow";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
-import {toast} from "sonner";
+import useUpdateUserProfile from "../../hooks/useUpdateUserProfile";
+import ProfileHeaderSkeleton from "../../components/skeletons/ProfileHeaderSkeleton";
 
 const Profile = () => {
+  const {follow, isPending} = useFollow();
   const [coverImg, setCoverImg] = useState(null);
   const [profileImg, setProfileImg] = useState(null);
   const [feedType, setFeedType] = useState("posts");
 
+  const {username} = useParams();
   const coverImgRef = useRef(null);
   const profileImgRef = useRef(null);
-
-  const queryClient = useQueryClient();
-
-  const {username} = useParams();
-
-  const {follow, isPending} = useFollow();
 
   const {data: authUser} = useQuery({queryKey: ["authUser"]});
 
@@ -50,37 +46,7 @@ const Profile = () => {
     },
   });
 
-  const {mutate: updateProfile, isPending: isUpdatingProfile} = useMutation({
-    mutationFn: async () => {
-      try {
-        const res = await fetch(`/api/users/update`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            coverImage: coverImg,
-            profileImg,
-          }),
-        });
-        const data = await res.json();
-        if (!res.ok) {
-          throw new Error(data.message || "Something went Wrong");
-        }
-        if (data.success) {
-          toast.success(data.message);
-        }
-      } catch (error) {
-        throw new Error(error);
-      }
-    },
-    onSuccess: () => {
-      Promise.all([
-        queryClient.invalidateQueries({queryKey: ["authUser"]}),
-        queryClient.invalidateQueries({queryKey: ["userProfile"]}),
-      ]);
-    },
-  });
+  const {isUpdatingProfile, updateProfile} = useUpdateUserProfile();
 
   const isMyProfile = authUser?.data?._id === user?._id;
   const amIFollowing = authUser?.data?.following.includes(user?._id);
@@ -160,14 +126,14 @@ const Profile = () => {
                         "/avatar-placeholder.png"
                       }
                     />
-                    <div className="absolute top-5 right-3 p-1 bg-primary rounded-full group-hover/avatar:opacity-100 opacity-0 cursor-pointer">
-                      {isMyProfile && (
+                    {isMyProfile && (
+                      <div className="absolute top-5 right-3 p-1 bg-primary rounded-full group-hover/avatar:opacity-100 opacity-0 cursor-pointer">
                         <MdEdit
                           className="w-4 h-4 text-white"
                           onClick={() => profileImgRef.current.click()}
                         />
-                      )}
-                    </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -185,7 +151,11 @@ const Profile = () => {
                 {(coverImg || profileImg) && (
                   <button
                     className="btn btn-primary rounded-full btn-sm text-white px-4 ml-2"
-                    onClick={() => updateProfile()}>
+                    onClick={async () => {
+                      await updateProfile({coverImage: coverImg, profileImg});
+                      setProfileImg(null);
+                      setCoverImg(null);
+                    }}>
                     {isUpdatingProfile ? (
                       <span className="flex items-center">
                         <LoadingSpinner /> Updating...

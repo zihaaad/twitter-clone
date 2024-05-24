@@ -1,25 +1,10 @@
 /* eslint-disable react/prop-types */
-import {useQuery} from "@tanstack/react-query";
 import LoadingSpinner from "../components/common/LoadingSpinner";
 import {Navigate} from "react-router-dom";
+import useAuth from "../hooks/useAuth";
 
 export const ProtectedRoutes = ({children}) => {
-  const {data: authUser, isLoading} = useQuery({
-    queryKey: ["authUser"],
-    queryFn: async () => {
-      try {
-        const res = await fetch("/api/auth/me");
-        const data = await res.json();
-        if (!data.success) return null;
-        if (!res.ok) {
-          throw new Error(data.message || "Something wnet wrong");
-        }
-        return data;
-      } catch (error) {
-        throw new Error(error);
-      }
-    },
-  });
+  const {authUser, isLoading} = useAuth();
 
   if (isLoading) {
     return (

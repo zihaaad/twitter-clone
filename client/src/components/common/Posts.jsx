@@ -37,7 +37,6 @@ const Posts = ({feedType, username, userId}) => {
         if (!res.ok) {
           throw new Error(data.message || "Something went wrong");
         }
-
         return data.data;
       } catch (error) {
         throw new Error(error);
@@ -47,7 +46,7 @@ const Posts = ({feedType, username, userId}) => {
 
   useEffect(() => {
     refetch();
-  }, [feedType, refetch]);
+  }, [feedType, username, userId, refetch]);
 
   return (
     <>

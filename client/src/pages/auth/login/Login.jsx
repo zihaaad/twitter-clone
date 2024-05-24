@@ -1,15 +1,16 @@
 import {useState} from "react";
-import {Link, useNavigate} from "react-router-dom";
+import {Link, Navigate} from "react-router-dom";
 
 import {MdOutlineMail} from "react-icons/md";
 import {MdPassword} from "react-icons/md";
 import XSvg from "../../../components/svg/X";
 import {useMutation, useQueryClient} from "@tanstack/react-query";
 import {Toaster, toast} from "sonner";
+import useAuth from "../../../hooks/useAuth";
 
 const Login = () => {
   const queryClient = useQueryClient();
-  const navigate = useNavigate();
+  const {authUser, isLoading} = useAuth();
   const [formData, setFormData] = useState({
     username: "",
     password: "",
@@ -43,7 +44,6 @@ const Login = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({queryKey: ["authUser"]});
-      navigate("/");
     },
   });
 
@@ -56,6 +56,9 @@ const Login = () => {
     setFormData({...formData, [e.target.name]: e.target.value});
   };
 
+  if (!isLoading && authUser?.data) {
+    return <Navigate to={"/"} />;
+  }
   return (
     <div className="max-w-screen-xl mx-auto flex h-screen">
       <div className="flex-1 hidden lg:flex items-center  justify-center">
@@ -110,4 +113,5 @@ const Login = () => {
     </div>
   );
 };
+
 export default Login;
