@@ -1,18 +1,17 @@
 import {useEffect, useRef, useState} from "react";
 import {Link, useParams} from "react-router-dom";
-
 import Posts from "../../components/common/Posts";
 import EditProfileModal from "./EditProfileModal";
-
 import {POSTS} from "../../utils/db/dummy";
-
 import {FaArrowLeft} from "react-icons/fa6";
 import {IoCalendarOutline} from "react-icons/io5";
-import {FaLink} from "react-icons/fa";
 import {MdEdit} from "react-icons/md";
 import ProfileHeaderSkeleton from "../../components/skeletons/ProfileHeaderSkeleton";
-import {useQuery} from "@tanstack/react-query";
+import {useMutation, useQuery, useQueryClient} from "@tanstack/react-query";
 import {formatMemberSinceDate} from "../../utils/db/date";
+import useFollow from "../../hooks/useFollow";
+import LoadingSpinner from "../../components/common/LoadingSpinner";
+import {toast} from "sonner";
 
 const Profile = () => {
   const [coverImg, setCoverImg] = useState(null);
@@ -21,9 +20,14 @@ const Profile = () => {
 
   const coverImgRef = useRef(null);
   const profileImgRef = useRef(null);
-  const isMyProfile = true;
+
+  const queryClient = useQueryClient();
 
   const {username} = useParams();
+
+  const {follow, isPending} = useFollow();
+
+  const {data: authUser} = useQuery({queryKey: ["authUser"]});
 
   const {
     data: user,
@@ -45,6 +49,41 @@ const Profile = () => {
       }
     },
   });
+
+  const {mutate: updateProfile, isPending: isUpdatingProfile} = useMutation({
+    mutationFn: async () => {
+      try {
+        const res = await fetch(`/api/users/update`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            coverImage: coverImg,
+            profileImg,
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.message || "Something went Wrong");
+        }
+        if (data.success) {
+          toast.success(data.message);
+        }
+      } catch (error) {
+        throw new Error(error);
+      }
+    },
+    onSuccess: () => {
+      Promise.all([
+        queryClient.invalidateQueries({queryKey: ["authUser"]}),
+        queryClient.invalidateQueries({queryKey: ["userProfile"]}),
+      ]);
+    },
+  });
+
+  const isMyProfile = authUser?.data?._id === user?._id;
+  const amIFollowing = authUser?.data?.following.includes(user?._id);
 
   const handleImgChange = (e, state) => {
     const file = e.target.files[0];
@@ -87,7 +126,7 @@ const Profile = () => {
               {/* COVER IMG */}
               <div className="relative group/cover">
                 <img
-                  src={coverImg || user?.coverImg || "/cover.png"}
+                  src={coverImg || user?.coverImage || "/cover.png"}
                   className="h-52 w-full object-cover"
                   alt="cover image"
                 />
@@ -133,19 +172,27 @@ const Profile = () => {
                 </div>
               </div>
               <div className="flex justify-end px-4 mt-5">
-                {isMyProfile && <EditProfileModal />}
+                {isMyProfile && <EditProfileModal authUser={authUser?.data} />}
                 {!isMyProfile && (
                   <button
                     className="btn btn-outline rounded-full btn-sm"
-                    onClick={() => alert("Followed successfully")}>
-                    Follow
+                    onClick={() => follow(user?._id)}>
+                    {isPending && <LoadingSpinner size="sm" />}
+                    {!isPending && amIFollowing && "Unfollow"}
+                    {!isPending && !amIFollowing && "Follow"}
                   </button>
                 )}
                 {(coverImg || profileImg) && (
                   <button
                     className="btn btn-primary rounded-full btn-sm text-white px-4 ml-2"
-                    onClick={() => alert("Profile updated successfully")}>
-                    Update
+                    onClick={() => updateProfile()}>
+                    {isUpdatingProfile ? (
+                      <span className="flex items-center">
+                        <LoadingSpinner /> Updating...
+                      </span>
+                    ) : (
+                      "Update"
+                    )}
                   </button>
                 )}
               </div>
@@ -160,20 +207,6 @@ const Profile = () => {
                 </div>
 
                 <div className="flex gap-2 flex-wrap">
-                  {user?.link && (
-                    <div className="flex gap-1 items-center ">
-                      <>
-                        <FaLink className="w-3 h-3 text-slate-500" />
-                        <a
-                          href="https://youtube.com/@asaprogrammer_"
-                          target="_blank"
-                          rel="noreferrer"
-                          className="text-sm text-blue-500 hover:underline">
-                          youtube.com/@asaprogrammer_
-                        </a>
-                      </>
-                    </div>
-                  )}
                   <div className="flex gap-2 items-center">
                     <IoCalendarOutline className="w-4 h-4 text-slate-500" />
                     <span className="text-sm text-slate-500">
