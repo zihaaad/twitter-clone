@@ -172,20 +172,19 @@ export const updateUser = async (req, res) => {
       user.password = await bcrypt.hash(newPassword, salt);
     }
 
-    console.log(username);
-
     if (profileImg) {
       if (user.profileImg) {
-        await cloudinary.uploader.destroy(user.profileImg);
+        const profileImgId = user.profileImg.split("/").pop().split(".")[0];
+        await cloudinary.uploader.destroy(profileImgId);
       }
       const uploadedRes = await cloudinary.uploader.upload(profileImg);
       profileImg = uploadedRes.secure_url;
     }
 
     if (coverImage) {
-      // .split("/").pop().split(".")[0]
+      const coverImageId = user.coverImage.split("/").pop().split(".")[0];
       if (user.coverImage) {
-        await cloudinary.uploader.destroy(user.coverImage);
+        await cloudinary.uploader.destroy(coverImageId);
       }
       const uploadedRes = await cloudinary.uploader.upload(coverImage);
       coverImage = uploadedRes.secure_url;
@@ -201,7 +200,6 @@ export const updateUser = async (req, res) => {
 
     user = await user.save();
     user.password = null;
-    console.log(user);
 
     return Response(res, {
       httpCode: 200,

@@ -153,10 +153,8 @@ export const likeUnlikePost = async (req, res) => {
 
     const userLikedPost = post.likes.includes(userId);
     if (userLikedPost) {
-      post.likes.pop(userId);
-      user.likedPosts.pop(postId);
-      await user.save();
-      await post.save();
+      await Post.updateOne({_id: postId}, {$pull: {likes: userId}});
+      await User.updateOne({_id: userId}, {$pull: {likedPosts: postId}});
 
       const updatedLikes = post.likes.filter(
         (id) => id.toString() !== userId.toString()
@@ -170,9 +168,8 @@ export const likeUnlikePost = async (req, res) => {
       });
     } else {
       post.likes.push(userId);
-      user.likedPosts.push(postId);
+      await User.updateOne({_id: userId}, {$push: {likedPosts: postId}});
       await post.save();
-      await user.save();
 
       const notification = new Notification({
         from: userId,
@@ -180,8 +177,8 @@ export const likeUnlikePost = async (req, res) => {
         type: "like",
       });
 
-      const updatedLikes = post.likes;
       await notification.save();
+      const updatedLikes = post.likes;
 
       return Response(res, {
         httpCode: 200,
@@ -226,7 +223,6 @@ export const getLikedPosts = async (req, res) => {
 
   try {
     const user = await User.findById(userId);
-
     if (!user) {
       return Response(res, {
         httpCode: 400,
@@ -294,9 +290,9 @@ export const getFollowingPosts = async (req, res) => {
 };
 
 export const getUserPost = async (req, res) => {
-  const userId = req.params.id;
+  const {username} = req.params;
   try {
-    const user = await User.findById(userId);
+    const user = await User.findOne({username: username});
     if (!user) {
       return Response(res, {
         httpCode: 400,
@@ -305,10 +301,13 @@ export const getUserPost = async (req, res) => {
       });
     }
 
-    const userPosts = await Post.find({user: userId}).populate({
-      path: "user",
-      select: "-password",
-    });
+    const userPosts = await Post.find({user: user._id})
+      .sort({createdAt: -1})
+      .populate({
+        path: "user",
+        select: "-password",
+      });
+
     Response(res, {
       httpCode: 200,
       status: true,
